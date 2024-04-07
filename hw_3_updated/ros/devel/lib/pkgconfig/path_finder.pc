@@ -1,0 +1,8 @@
+prefix=/home/qsl/shenlan/hw_3_updated/ros/devel
+
+Name: path_finder
+Description: Description of path_finder
+Version: 0.0.0
+Cflags: -I/home/qsl/shenlan/hw_3_updated/ros/src/path_finder/include
+Libs: -L${prefix}/lib -lpath_finder
+Requires: occ_grid

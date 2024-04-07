@@ -1,0 +1,24 @@
+{
+  "configurations": [
+    {
+      "browse": {
+        "databaseFilename": "${default}",
+        "limitSymbolsToIncludedHeaders": false
+      },
+      "includePath": [
+        "/home/qsl/shenlan/hw_3_updated/ros/devel/include/**",
+        "/opt/ros/noetic/include/**",
+        "/home/qsl/shenlan/hw_3_updated/ros/src/map_gen/mockamap/include/**",
+        "/home/qsl/shenlan/hw_3_updated/ros/src/occ_grid/include/**",
+        "/home/qsl/shenlan/hw_3_updated/ros/src/path_finder/include/**",
+        "/usr/include/**"
+      ],
+      "name": "ROS",
+      "intelliSenseMode": "gcc-x64",
+      "compilerPath": "/usr/bin/gcc",
+      "cStandard": "gnu11",
+      "cppStandard": "c++14"
+    }
+  ],
+  "version": 4
+}

@@ -1,0 +1,2 @@
+map_gen/map_generator:map_gen/mockamap:occ_grid:path_finder:rviz_plugins:self_msgs_and_srvs
+-DCATKIN_DEVEL_PREFIX=/home/qsl/shenlan/hw_3_updated/ros/devel -DCMAKE_INSTALL_PREFIX=/home/qsl/shenlan/hw_3_updated/ros/install -G Unix Makefiles

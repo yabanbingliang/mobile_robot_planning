@@ -1,0 +1,2 @@
+grid_path_searcher:hw:rviz_plugins:waypoint_generator
+-DCATKIN_DEVEL_PREFIX=/home/qsl/shenlan/hw_2/ros/devel -DCMAKE_INSTALL_PREFIX=/home/qsl/shenlan/hw_2/ros/install -G Unix Makefiles

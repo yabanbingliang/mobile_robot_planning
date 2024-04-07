@@ -1,0 +1,8 @@
+prefix=/home/qsl/shenlan/hw_3_updated/ros/devel
+
+Name: occ_grid
+Description: Description of occ_grid
+Version: 0.0.0
+Cflags: -I/home/qsl/shenlan/hw_3_updated/ros/src/occ_grid/include
+Libs: -L${prefix}/lib -locc_grid
+Requires: roscpp std_msgs
