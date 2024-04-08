@@ -290,6 +290,8 @@ double AstarPathFinder::perpendicularDistance(const Vector3d& p, const Vector3d&
 
 
 
+![image-20240408143504694](README.assets/image-20240408143504694.png)
+
 #### minimum snap
 
 
