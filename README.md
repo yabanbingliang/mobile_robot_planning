@@ -53,7 +53,6 @@ double AstarPathFinder::getHeu(GridNodePtr node1, GridNodePtr node2) {
   hScore = dx + dy + dz + (std::sqrt(3.0) - 3) * min_xyz;
 
   // no tie_breaker
-  // what is tie_breaker
 
   hScore = hScore * (1 + 1.0 / 10000);
 
@@ -270,16 +269,29 @@ vector<Vector3d> AstarPathFinder::RDP(const vector<Vector3d>& points, double eps
 }
 
 double AstarPathFinder::perpendicularDistance(const Vector3d& p, const Vector3d& p1, const Vector3d& p2) {
-  double x = p1.x() - p2.x();
-  double y = p1.y() - p2.y();
-  double z = p1.z() - p2.z();
-
-  double num = abs(x * (p1.y() - p.y()) - (p1.x() - p.x()) * y + p1.z() * (p1.x() - p.x()) - p1.x() * (p1.z() - p.z()));
-  double den = sqrt(x * x + y * y + z * z);
+  // 计算直线方向向量
+  Vector3d lineVec = p2 - p1;
+  // 计算p到p1的向量和p到p2的向量的叉乘的模长
+  double num = ((p - p1).cross(p - p2)).norm();
+  // 计算直线方向向量的模长
+  double den = lineVec.norm();
 
   return num / den;
 }
 
+vector<Vector3d> AstarPathFinder::pathSimplify(const vector<Vector3d>& path,
+  double path_resolution) {
+  vector<Vector3d> subPath;
+  /**
+   *
+   * STEP 2.1:  implement the RDP algorithm
+   *
+   * **/
+
+  subPath = RDP(path, path_resolution);
+
+  return subPath;
+}
 ```
 
 
@@ -292,9 +304,231 @@ double AstarPathFinder::perpendicularDistance(const Vector3d& p, const Vector3d&
 
 ![image-20240408143504694](README.assets/image-20240408143504694.png)
 
+
+
+### timeAllocation
+
+```c++
+double timeTrapzVel(const double dist,
+  const double vel,
+  const double acc)
+{
+  const double t = vel / acc;
+  const double d = 0.5 * acc * t * t;
+
+  if (dist < d + d)
+  {
+    return 2.0 * sqrt(dist / acc);
+  }
+  else
+  {
+    return 2.0 * t + (dist - 2.0 * d) / vel;
+  }
+}
+
+VectorXd timeAllocation(MatrixXd Path) {
+  VectorXd time(Path.rows() - 1);
+
+  // cout << "_Vel = " << _Vel << endl; // 3
+  // cout << "_Acc = " << _Acc << endl; // 2
+
+  for (int i = 0; i < time.size(); i++) {
+    double dist = 0.0;
+    for (int j = 0; j < Path.cols(); ++j) {
+      double diff = Path(i + 1, j) - Path(i, j);
+      dist += diff * diff;
+    }
+    dist = sqrt(dist);
+    time(i) = timeTrapzVel(dist, _Vel, _Acc);
+  }
+
+  cout << "time: " << endl;
+  for (int i = 0; i < time.size(); i++) {
+    std::cout << "time[" << i << "]: ";
+    cout << time(i) << endl;
+  }
+
+  return time;
+}
+```
+
+
+
 #### minimum snap
 
+```c++
+Eigen::MatrixXd TrajectoryGeneratorWaypoint::PolyQPGeneration(
+  const int d_order,           // the order of derivative
+  const Eigen::MatrixXd& Path, // waypoints coordinates (3d)
+  const Eigen::MatrixXd& Vel,  // boundary velocity
+  const Eigen::MatrixXd& Acc,  // boundary acceleration
+  const Eigen::VectorXd& Time) // time allocation in each segment
+{
+  // enforce initial and final velocity and accleration, for higher order
+  // derivatives, just assume them be 0;
+  int p_order = 2 * d_order - 1; // the order of polynomial
+  int p_num1d = p_order + 1;     // the number of variables in each segment
 
+  int m = Time.size();
+  MatrixXd PolyCoeff(m, 3 * p_num1d);
+
+  std::cout << "PolyCoeff shape: " << PolyCoeff.rows() << " x " << PolyCoeff.cols() << std::endl;
+
+  /**
+   *
+   * STEP 3.2:  generate a minimum-snap piecewise monomial polynomial-based
+   * trajectory
+   *
+   * **/
+
+  int pieceNum = Path.rows() - 1;
+
+
+  // Get the first point from Path
+  Eigen::Vector3d initialPos = Path.row(0);
+
+  // Get the last point from Path
+  Eigen::Vector3d terminalPos = Path.row(Path.rows() - 1);
+
+
+
+  /* way1 闭式解 */
+
+  Eigen::Vector3d initialVel = Vel.row(0);
+  Eigen::Vector3d initialAcc = Acc.row(0);
+  Eigen::Vector3d terminalVel = Vel.row(1);
+  Eigen::Vector3d terminalAcc = Acc.row(1);
+
+  Eigen::MatrixXd M = Eigen::MatrixXd::Zero(8 * pieceNum, 8 * pieceNum);
+  Eigen::MatrixXd b = Eigen::MatrixXd::Zero(8 * pieceNum, 3);
+
+  // START
+  Eigen::MatrixXd F_0(4, 8);
+  F_0 << 1, 0, 0, 0, 0, 0, 0, 0,
+    0, 1, 0, 0, 0, 0, 0, 0,
+    0, 0, 2, 0, 0, 0, 0, 0,
+    0, 0, 0, 6, 0, 0, 0, 0;
+  M.block(0, 0, 4, 8) = F_0;
+  b.block(0, 0, 4, 3) << initialPos(0), initialPos(1), initialPos(2),
+    initialVel(0), initialVel(1), initialVel(2),
+    initialAcc(0), initialAcc(1), initialAcc(2),
+    0, 0, 0; //最后一行为jerk
+
+  std::cout << "F_0" << std::endl;
+  std::cout << M.block(0, 0, 4, 8) << std::endl;
+
+  std::cout << "b_0" << std::endl;
+  std::cout << b.block(0, 0, 4, 3) << std::endl;
+
+  cout << "pieceNum = " << pieceNum << endl;
+  for (int i = 0; i < m; i++) {
+    cout << "Time[" << i << "] = " << Time(i) << endl;
+  }
+
+  cout << "Time(pieceNum - 1) = " << Time(pieceNum - 1) << endl;
+
+  // END
+  double t(Time(pieceNum - 1)); // 最后一段时间
+  Eigen::MatrixXd E_M(4, 8);
+  E_M << 1, t, pow(t, 2), pow(t, 3), pow(t, 4), pow(t, 5), pow(t, 6), pow(t, 7),
+    0, 1, 2 * t, 3 * pow(t, 2), 4 * pow(t, 3), 5 * pow(t, 4), 6 * pow(t, 5), 7 * pow(t, 6),
+    0, 0, 2, 6 * t, 12 * pow(t, 2), 20 * pow(t, 3), 30 * pow(t, 4), 42 * pow(t, 5),
+    0, 0, 0, 6, 24 * t, 60 * pow(t, 2), 120 * pow(t, 3), 210 * pow(t, 4);
+  M.block(8 * pieceNum - 4, 8 * (pieceNum - 1), 4, 8) = E_M;
+  b.block(8 * pieceNum - 4, 0, 4, 3) << terminalPos(0), terminalPos(1), terminalPos(2),
+    terminalVel(0), terminalVel(1), terminalVel(2),
+    terminalAcc(0), terminalAcc(1), terminalAcc(2),
+    0, 0, 0; // 最后一行为jerk
+
+  std::cout << "E_M" << std::endl;
+  std::cout << M.block(8 * pieceNum - 4, 8 * (pieceNum - 1), 4, 8) << std::endl;
+
+  std::cout << "b_M" << std::endl;
+  std::cout << b.block(8 * pieceNum - 4, 0, 4, 3) << std::endl;
+
+  cout << "start & end is ok!" << endl;
+
+  for (int i = 1; i < pieceNum; i++) { //第二个到倒数第二个
+    double t(Time(i - 1));
+    Eigen::MatrixXd F_i(8, 8), E_i(8, 8);
+
+    // Eigen::Vector3d D_i(intermediatePositions.transpose().row(i - 1));
+    Eigen::Vector3d D_i(Path.row(i).transpose());
+
+    E_i << 1, t, pow(t, 2), pow(t, 3), pow(t, 4), pow(t, 5), pow(t, 6), pow(t, 7),
+      1, t, pow(t, 2), pow(t, 3), pow(t, 4), pow(t, 5), pow(t, 6), pow(t, 7),
+      0, 1, 2 * t, 3 * pow(t, 2), 4 * pow(t, 3), 5 * pow(t, 4), 6 * pow(t, 5), 7 * pow(t, 6),
+      0, 0, 2, 6 * t, 12 * pow(t, 2), 20 * pow(t, 3), 30 * pow(t, 4), 42 * pow(t, 5),
+      0, 0, 0, 6, 24 * t, 60 * pow(t, 2), 120 * pow(t, 3), 210 * pow(t, 4),
+      0, 0, 0, 0, 24, 120 * t, 360 * pow(t, 2), 840 * pow(t, 3),
+      0, 0, 0, 0, 0, 120, 720 * t, 2520 * pow(t, 2),
+      0, 0, 0, 0, 0, 0, 720, 5040 * t;
+    F_i << 0, 0, 0, 0, 0, 0, 0, 0,
+      -1, 0, 0, 0, 0, 0, 0, 0,
+      0, -1, 0, 0, 0, 0, 0, 0,
+      0, 0, -2, 0, 0, 0, 0, 0,
+      0, 0, 0, -6, 0, 0, 0, 0,
+      0, 0, 0, 0, -24, 0, 0, 0,
+      0, 0, 0, 0, 0, -120, 0, 0,
+      0, 0, 0, 0, 0, 0, -720, 0;
+    int j = 8 * (i - 1);
+    M.block(4 + 8 * (i - 1), j + 8, 8, 8) = F_i;
+    M.block(4 + 8 * (i - 1), j, 8, 8) = E_i;
+    b.block(4 + 8 * (i - 1), 0, 8, 3) << D_i(0), D_i(1), D_i(2),
+      0, 0, 0,
+      0, 0, 0,
+      0, 0, 0,
+      0, 0, 0,
+      0, 0, 0,
+      0, 0, 0,
+      0, 0, 0;
+  }
+  Eigen::MatrixX3d coefficientMatrix;
+  coefficientMatrix = M.inverse() * b;
+
+  // Output the shape and size of M, b, and coefficientMatrix
+  std::cout << "Shape and size of M: " << M.rows() << "x" << M.cols() << std::endl;
+  std::cout << "Shape and size of b: " << b.rows() << "x" << b.cols() << std::endl;
+  std::cout << "Shape and size of coefficientMatrix: " << coefficientMatrix.rows() << "x" << coefficientMatrix.cols() << std::endl;
+
+  std::cout << "coefficientMatrix = " << std::endl;
+  std::cout << coefficientMatrix << std::endl;
+
+  // coefficientMatrix 2 PolyCoeff
+  // coefficientMatrix (pieceNum * 8) * 3， 每一行表示的是x y z的一个系数 每8行3列表示的是一段轨迹的x y z的多项式系数 从低到高
+  // PolyCoeff pieceNum * (8 * 3) = pieceNum * 24，其中24表示的是一段轨迹的x y z的7阶多项式系数的个数，按照xyz和从低到高的顺序排列
+
+  MatrixXd tmpPolyCoeff(m, 3 * p_num1d);
+  // MatrixXd tmpPolyCoeff;
+
+  for (int i = 0; i < m; ++i) {
+    // 对于每个路径段
+    for (int j = 0; j < p_num1d; ++j) {
+      // j 表示当前多项式系数的索引
+      // 这里我们需要将coefficientMatrix对应路径段的系数按顺序赋值到PolyCoeff中
+      tmpPolyCoeff(i, j) = coefficientMatrix(i * 8 + j, 0); // X方向
+      tmpPolyCoeff(i, j + p_num1d) = coefficientMatrix(i * 8 + j, 1); // Y方向
+      tmpPolyCoeff(i, j + 2 * p_num1d) = coefficientMatrix(i * 8 + j, 2); // Z方向
+    }
+  }
+  std::cout << "Shape and size of tmpPolyCoeff: " << tmpPolyCoeff.rows() << "x" << tmpPolyCoeff.cols() << std::endl;
+  std::cout << "tmpPolyCoeff = " << std::endl;
+  std::cout << tmpPolyCoeff << std::endl;
+
+  PolyCoeff = tmpPolyCoeff;
+
+  return PolyCoeff;
+}
+```
+
+
+
+
+
+![image-20240408222922595](README.assets/image-20240408222922595.png)
+
+reference
+[1](https://blog.csdn.net/u011341856/article/details/121861930)
 
 
 
@@ -307,6 +541,51 @@ double AstarPathFinder::perpendicularDistance(const Vector3d& p, const Vector3d&
 ### 2.调试的时候总是不按顺序执行
 
 不知道怎么解决
+
+### 3.轨迹无法正常显示
+
+把 `visTrajectory` 中的 `_traj_vis.header.frame_id = "/world";` 改为 _traj_vis.header.frame_id = "/world";
+
+```c++
+void visTrajectory(MatrixXd polyCoeff, VectorXd time) {
+  visualization_msgs::Marker _traj_vis;
+
+  _traj_vis.header.stamp = ros::Time::now();
+  _traj_vis.header.frame_id = "world";
+
+  _traj_vis.ns = "traj_node/trajectory";
+  _traj_vis.id = 0;
+  _traj_vis.type = visualization_msgs::Marker::SPHERE_LIST;
+  _traj_vis.action = visualization_msgs::Marker::ADD;
+  _traj_vis.scale.x = _vis_traj_width;
+  _traj_vis.scale.y = _vis_traj_width;
+  _traj_vis.scale.z = _vis_traj_width;
+  _traj_vis.pose.orientation.x = 0.0;
+  _traj_vis.pose.orientation.y = 0.0;
+  _traj_vis.pose.orientation.z = 0.0;
+  _traj_vis.pose.orientation.w = 1.0;
+
+  _traj_vis.color.a = 1.0;
+  _traj_vis.color.r = 0.0;
+  _traj_vis.color.g = 0.5;
+  _traj_vis.color.b = 1.0;
+
+  _traj_vis.points.clear();
+  Vector3d pos;
+  geometry_msgs::Point pt;
+
+  for (int i = 0; i < time.size(); i++) {
+    for (double t = 0.0; t < time(i); t += 0.01) {
+      pos = _trajGene->getPosPoly(polyCoeff, i, t);
+      pt.x = pos(0);
+      pt.y = pos(1);
+      pt.z = pos(2);
+      _traj_vis.points.push_back(pt);
+    }
+  }
+  _traj_vis_pub.publish(_traj_vis);
+}
+```
 
 
 
@@ -478,7 +757,9 @@ roslaunch lec5_hw click_gen.launch
 
 ![image-20240408172432412](README.assets/image-20240408172432412.png)
 
+### reference
 
+[1](https://blog.csdn.net/qq_42286607/article/details/124700538)  [2 ](https://blog.csdn.net/qq_37746927/article/details/136153560?spm=1001.2014.3001.5502) 
 
 ## hw_6
 
