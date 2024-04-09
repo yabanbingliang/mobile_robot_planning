@@ -22,13 +22,13 @@ source 一下工作空间
 source devel/setup.bash
 ```
 
-终端输入如下命令，启动无人机初始环境
+终端输入如下命令，启动无人机初始环境，然后使用 `rviz` 中的 `3D Nav Goal` 设置目标点即可。
 
 ```
 roslaunch trajectory_generator demo.launch
 ```
 
-![image-20240408100548715](README.assets/image-20240408100548715.png)
+![planning_1](README.assets/planning_1.gif)
 
 
 
@@ -298,11 +298,9 @@ vector<Vector3d> AstarPathFinder::pathSimplify(const vector<Vector3d>& path,
 
 #### A* + RDP的效果
 
-![image-20240408135713940](README.assets/image-20240408135713940.png)
+![image-20240409192730017](README.assets/image-20240409192730017.png)
 
-
-
-![image-20240408143504694](README.assets/image-20240408143504694.png)
+![image-20240409192926988](README.assets/image-20240409192926988.png)
 
 
 
