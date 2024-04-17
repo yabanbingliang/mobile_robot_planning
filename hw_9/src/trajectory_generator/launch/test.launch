@@ -1,0 +1,37 @@
+<launch>
+
+  <arg name="map_size_x" default="30.0"/>
+  <arg name="map_size_y" default="30.0"/>
+  <arg name="map_size_z" default="4.0"/>
+  <arg name="map_frame_name"  default="world"/>
+
+  <arg name="start_x" default=" -15.0"/>
+  <arg name="start_y" default=" 0.0"/>
+  <arg name="start_z" default=" 2.0"/>
+
+  <arg name="sensing_horizon"  default="5.0" />
+  <arg name="sensing_rate"     default="30.0"/>
+  <arg name="estimation_rate"  default="30.0"/>
+
+  <node pkg="trajectory_generator" type="trajectory_generator_node" name="trajectory_generator_node" output="screen" required = "true">
+      <remap from="~waypoints"        to="/waypoint_generator/waypoints"/>
+      <remap from="~local_pointcloud" to="/pcl_render_node/local_pointcloud"/> 
+      <remap from="~odom"             to="/visual_slam/odom"/>
+      
+      <param name="planning/vel"                value="3.0"  />
+      <param name="planning/acc"                value="2.0"  />
+      <param name="planning/dev_order"          value="4"    />
+      <param name="planning/min_order"          value="3"    />
+      <param name="vis/vis_traj_width"          value="0.07" />
+      <param name="map/margin"                  value="0.0" />
+      <param name="map/resolution"              value="0.2" />
+      <param name="map/x_size"                  value="$(arg map_size_x)"/>
+      <param name="map/y_size"                  value="$(arg map_size_y)"/>
+      <param name="map/z_size"                  value="$(arg map_size_z)"/>
+      <param name="replanning/thresh_replan"    value="1.5" type="double"/>
+      <param name="replanning/thresh_no_replan" value="2.0" type="double"/>
+      <param name="path/resolution"             value="0.2"/>
+
+  </node>
+
+</launch>
