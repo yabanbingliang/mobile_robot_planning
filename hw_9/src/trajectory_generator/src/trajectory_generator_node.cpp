@@ -189,11 +189,11 @@ void execCallback(const ros::TimerEvent& e) {
     bool success = trajGeneration();
     if (success)
     {
-      // changeState(EXEC_TRAJ, "STATE");
+      changeState(EXEC_TRAJ, "STATE");
 
       // for debug
-      changeState(WAIT_TARGET, "STATE");
-      has_target = false;
+      // changeState(WAIT_TARGET, "STATE");
+      // has_target = false;
     }
 
     else
@@ -206,6 +206,9 @@ void execCallback(const ros::TimerEvent& e) {
     double t_cur = (time_now - time_traj_start).toSec();
     double t_replan = ros::Duration(1, 0).toSec();
     t_cur = min(time_duration, t_cur);
+
+    // cout << "t_cur = " << t_cur << endl;
+    // cout << "time_duration = " << time_duration << endl;
 
     if (t_cur > time_duration - 1e-2) {
       has_target = false;
@@ -254,12 +257,12 @@ void execCallback(const ros::TimerEvent& e) {
     ROS_WARN("[replan] start_vel = %f, %f, %f", start_vel(0), start_vel(1), start_vel(2));
     ROS_WARN("[replan] target_pt = %f, %f, %f", target_pt(0), target_pt(1), target_pt(2));
 
-    trajClear();
-    ROS_WARN("clear trajPublish");
-    visEmptyTrajectory();
-    visEmptyPath();
-    visEmptyAStarPath();
-    ROS_WARN("all vis empty");
+    // trajClear();
+    // ROS_WARN("clear trajPublish");
+    // visEmptyTrajectory();
+    // visEmptyPath();
+    // visEmptyAStarPath();
+    // ROS_WARN("all vis empty");
 
     bool success = trajGeneration();
     if (success)
@@ -379,7 +382,7 @@ bool trajGeneration() {
   time_duration = _polyTime.sum();
 
   // Publish the trajectory
-  // trajPublish(_polyCoeff, _polyTime);
+  trajPublish(_polyCoeff, _polyTime);
 
   // record the trajectory start time
   time_traj_start = ros::Time::now();

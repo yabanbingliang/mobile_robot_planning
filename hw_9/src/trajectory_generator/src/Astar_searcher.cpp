@@ -230,6 +230,7 @@ double AstarPathFinder::getHeu(GridNodePtr node1, GridNodePtr node2) {
 void AstarPathFinder::AstarGraphSearch(Vector3d start_pt, Vector3d end_pt)
 {
   ros::Time time_1 = ros::Time::now();
+  resetUsedGrids();
 
   //index of start_point and end_point
   Vector3i start_idx = coord2gridIndex(start_pt);
