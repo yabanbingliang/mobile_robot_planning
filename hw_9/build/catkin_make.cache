@@ -1,2 +1,0 @@
-read_only/Utils/odom_visualization:read_only/Utils/pose_utils:read_only/Utils/quadrotor_msgs:read_only/Utils/rviz_plugins:read_only/Utils/traj_server:read_only/Utils/waypoint_generator:read_only/map_server/map_generator:read_only/map_server/map_render:read_only/quadrotor_simulator/so3_control:read_only/quadrotor_simulator/so3_quadrotor_simulator:trajectory_generator
--DCATKIN_DEVEL_PREFIX=/home/qsl/hw_9/devel -DCMAKE_INSTALL_PREFIX=/home/qsl/hw_9/install -G Unix Makefiles

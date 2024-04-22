@@ -1,8 +1,0 @@
-prefix=/home/qsl/hw_9/devel
-
-Name: quadrotor_msgs
-Description: Description of quadrotor_msgs
-Version: 0.0.0
-Cflags: -I/home/qsl/hw_9/devel/include
-Libs: -L${prefix}/lib -lencode_msgs -ldecode_msgs
-Requires: message_runtime

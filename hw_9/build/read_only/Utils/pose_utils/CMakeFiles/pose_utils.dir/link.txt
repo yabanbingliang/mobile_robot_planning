@@ -1,1 +1,0 @@
-/usr/bin/c++ -fPIC -O2 -g -DNDEBUG  -shared -Wl,-soname,libpose_utils.so -o /home/qsl/hw_9/devel/lib/libpose_utils.so CMakeFiles/pose_utils.dir/src/pose_utils.cpp.o 

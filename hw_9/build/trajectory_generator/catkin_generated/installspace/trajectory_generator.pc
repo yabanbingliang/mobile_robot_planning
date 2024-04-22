@@ -1,8 +1,0 @@
-prefix=/home/qsl/hw_9/install
-
-Name: trajectory_generator
-Description: Description of trajectory_generator
-Version: 0.0.0
-Cflags: 
-Libs: -L${prefix}/lib 
-Requires: 
